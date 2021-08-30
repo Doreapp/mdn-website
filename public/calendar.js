@@ -41,8 +41,6 @@
         return document.querySelector(query)
     }
 
-    console.log("Start")
-
     socket = io.connect("/calendar")
 
     let calendar = undefined

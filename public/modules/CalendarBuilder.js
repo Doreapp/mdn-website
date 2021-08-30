@@ -97,12 +97,24 @@
         // Create main table
         let table = document.createElement("table")
         table.classList.add("calendar")
+        
+        let body = document.querySelector("body")
+
+        let currentTable = body.querySelector("calendar")
+        if(currentTable){
+            body.removeChild(currentTable)
+        }
+
+        body.appendChild(table)
 
         // Day currently computed 
         let currentDay = undefined
 
         // Today's date
         const today = new Date()
+
+        let currentDayHeader = undefined
+        let elementToScroll = undefined
 
         for (let i = 0; i < events.length; i++) {
             let event = events[i]
@@ -128,6 +140,8 @@
                 dayTitleCell.classList.add("day")
                 dayTitle.appendChild(dayTitleCell)
                 dayTitleCell.innerText = formatDayDate(currentDay)
+
+                currentDayHeader = dayTitle
 
                 table.appendChild(dayTitle)
             }
@@ -168,10 +182,12 @@
                 // The event is finished
                 mainRow.classList.add("done")
                 endHourRow.classList.add("done")
+            } else if (!elementToScroll) {
+                elementToScroll = currentDayHeader
             }
         }
 
-        document.querySelector("body").appendChild(table)
+        scrollTo(0, elementToScroll.offsetTop)
     }
 
     window["CalendarBuilder"] = CalendarBuilder

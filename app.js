@@ -3,6 +3,7 @@ const port = process.env.PORT || 3000,
     fs = require('fs'),
     path = require("path"),
     express = require("express"),
+    socketIO = require("socket.io"),
     CalendarFetch = require("./modules/CalendarFetch.js")
 
 const app = express()
@@ -13,16 +14,34 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "/public/index.html"))
 })
 
+app.get("/calendar", (req, res) => {
+    res.sendFile(path.join(__dirname, "/public/calendar.html"))
+})
+
 // Launch server (IPV4 only)
 let server = app.listen(port, "0.0.0.0", async() => {
     console.log('Server running at http://127.0.0.1:' + port + '/');
 })
 
-// Lets fetch the calendar
-CalendarFetch.fetchCalendar()
-    .then(result => {
-        console.log("Calendar fetched:\n"+result)
-    })
-    .catch(error => {
-        console.error("Error while fetching calendar", error)
-    })
+// Init the socket
+let io = socketIO(server, {
+    pingInterval: 1000,
+    pingTimeout: 5000, // this controls how fast the server disconnects after losing connectivity
+})
+
+io.of("/calendar").on("connection", socket => {
+    console.log("Connection from /calendar")
+
+    CalendarFetch.getCalendar()
+        .then(calendar => {
+            console.log("sending calendar")
+            socket.emit("calendar", calendar)
+        })
+        .catch(error => {
+            console.error("Error getting calendar:",error)
+        })
+    
+        //TODO sokcet on "update calendar"
+})
+
+//CalendarFetch.test()

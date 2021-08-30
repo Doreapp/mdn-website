@@ -1,0 +1,54 @@
+html {
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+table {
+    border: solid 1px black;
+    border-collapse: collapse;
+}
+
+td {
+    padding: 2px;
+}
+
+tr.line-up > td {
+    border-top: solid 1px black;
+}
+
+tr.line-down > td {
+    border-bottom: solid 1px black;
+}
+
+tr.pair {
+    background-color: #ddddff;
+}
+
+tr.odd {
+    background-color: #ccccff;
+}
+
+td.day {
+    text-align: center;
+    font-weight: bold;
+    background-color: #eeeeee;
+}
+
+td.start-hour {
+    vertical-align: top;
+    padding-right: 4px;
+}
+
+td.end-hour {
+    vertical-align: bottom;
+    padding-right: 4px;
+}
+
+tr.done {
+    background-color: grey;
+}
+
+#reload-button {
+    position: fixed;
+    right: 5px;
+    top: 5px;
+}

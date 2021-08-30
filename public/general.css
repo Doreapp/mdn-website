@@ -52,4 +52,5 @@ tr.done {
     position: fixed;
     right: 5px;
     top: 5px;
+    font-size: 1em;
 }

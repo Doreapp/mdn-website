@@ -1,5 +1,6 @@
 html {
     font-family: Arial, Helvetica, sans-serif;
+    font-size: 2em;
 }
 
 table {
@@ -47,7 +48,7 @@ tr.done {
     background-color: grey;
 }
 
-#reload-button {
+#btn-reload {
     position: fixed;
     right: 5px;
     top: 5px;

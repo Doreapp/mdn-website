@@ -19,7 +19,7 @@ app.get("/calendar", (req, res) => {
 })
 
 // Launch server (IPV4 only)
-let server = app.listen(port, "0.0.0.0", async() => {
+let server = app.listen(port, "0.0.0.0", async () => {
     console.log('Server running at http://127.0.0.1:' + port + '/');
 })
 
@@ -38,10 +38,21 @@ io.of("/calendar").on("connection", socket => {
             socket.emit("calendar", calendar)
         })
         .catch(error => {
-            console.error("Error getting calendar:",error)
+            console.error("Error getting calendar:", error)
         })
-    
-        //TODO sokcet on "update calendar"
+
+    socket.on("reload", () => {
+        console.log("Request to reload the calendar")
+        CalendarFetch.updateCalendar()
+            .then(calendar => {
+                console.log("sending calendar")
+                socket.emit("calendar",calendar)
+            })
+            .catch(error => {
+                console.error("Error reloading calendar:", error)
+            })
+    })
+    //TODO sokcet on "update calendar"
 })
 
 //CalendarFetch.test()

@@ -37,6 +37,10 @@
         return container
     }
 
+    const _qs = query => {
+        return document.querySelector(query)
+    }
+
     console.log("Start")
 
     socket = io.connect("/calendar")
@@ -46,11 +50,12 @@
         calendar = cal
 
         CalendarBuilder.setEvents(cal.events)
-
-        /*const body = document.querySelector("body")
-        for(let i = 0; i < cal.events.length; i++){
-            let div = buildEventElement(cal.events[i])
-            body.appendChild(div)
-        }*/
+        _qs("#btn-reload").disabled = false
     })
+
+    document.querySelector("#btn-reload").onclick = event => {
+        console.log("Ask for reload")
+        socket.emit("reload")
+        event.target.disabled = true
+    }
 })()

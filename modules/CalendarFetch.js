@@ -18,8 +18,8 @@ const URL = "https://www.kth.se/social/user/282379/icalendar/b5167b5d6e589f7c7bc
  */
 const saveRawCalendar = (raw) => {
   return new Promise((resolve, reject) => {
-    fs.writeFile(rawCalendarFile, raw, function(err) {
-      if(err) {
+    fs.writeFile(rawCalendarFile, raw, function (err) {
+      if (err) {
         reject(err)
       } else {
         resolve()
@@ -34,8 +34,8 @@ const saveRawCalendar = (raw) => {
  */
 const getRawCalendar = () => {
   return new Promise((resolve, reject) => {
-    fs.readFile(rawCalendarFile, "utf-8", function(err, data) {
-      if(err){
+    fs.readFile(rawCalendarFile, "utf-8", function (err, data) {
+      if (err) {
         reject(err)
       } else {
         resolve(data)
@@ -51,8 +51,8 @@ const getRawCalendar = () => {
  */
 const saveParsedCalendar = (json) => {
   return new Promise((resolve, reject) => {
-    fs.writeFile(parsedCalenderFile, JSON.stringify(json), function(err) {
-      if(err) {
+    fs.writeFile(parsedCalenderFile, JSON.stringify(json), function (err) {
+      if (err) {
         reject(err)
       } else {
         resolve()
@@ -67,14 +67,14 @@ const saveParsedCalendar = (json) => {
  */
 const getParsedCalendar = () => {
   return new Promise((resolve, reject) => {
-    fs.readFile(parsedCalenderFile, "utf-8", function(err, data) {
-      if(err){
+    fs.readFile(parsedCalenderFile, "utf-8", function (err, data) {
+      if (err) {
         reject(err)
       } else {
         try {
           let json = JSON.parse(data)
           resolve(json)
-        } catch(err){
+        } catch (err) {
           reject(err)
         }
       }
@@ -95,7 +95,7 @@ const executeGet = (url) => {
       {
         port: 443,
         method: 'GET'
-      }, res => {      
+      }, res => {
         // Read the content (body)
         let result = ""
 
@@ -109,11 +109,11 @@ const executeGet = (url) => {
           resolve(result)
         })
       })
-      
+
     req.on('error', error => {
-        reject(error)
+      reject(error)
     })
-    
+
     req.end()
   })
 }
@@ -133,12 +133,12 @@ const fetchCalendar = (url = URL) => {
  * @returns {Date} parsed date
  */
 const parseDatetime = str => {
-  const _ = i=> i<10 ? "0"+i : ""+i
-  const datestr = str.substring(0,4)+"-"+
-    str.substring(4,6)+"-"+
-    str.substring(6,8)+"T"+
-    _(parseInt(str.substring(9,11)) + 2)+":"+
-    str.substring(11, 13)+":00"
+  const _ = i => i < 10 ? "0" + i : "" + i
+  const datestr = str.substring(0, 4) + "-" +
+    str.substring(4, 6) + "-" +
+    str.substring(6, 8) + "T" +
+    _(parseInt(str.substring(9, 11)) + 2) + ":" +
+    str.substring(11, 13) + ":00"
   return new Date(Date.parse(datestr))
 }
 
@@ -146,39 +146,39 @@ const parseDatetime = str => {
  * Parse the raw calendar
  * @param {string} raw raw calendar content 
  */
-const parseRawCalendar = (raw, progressCallback=undefined) => {
+const parseRawCalendar = (raw, progressCallback = undefined) => {
   return new Promise((resolve, reject) => {
     console.log("Parsing started")
 
     let currentMax = 0
-    const notifyProgress = (progress,max=undefined) => {
-      if(max)
+    const notifyProgress = (progress, max = undefined) => {
+      if (max)
         currentMax = max
-      if(progressCallback)
-        progressCallback(progress,currentMax)
+      if (progressCallback)
+        progressCallback(progress, currentMax)
     }
 
     // Build with full lines
-    let lines = raw.replace(/\r?\n /g,"").split(/\r?\n/)
-  
+    let lines = raw.replace(/\r?\n /g, "").split(/\r?\n/)
+
     // Initialize results
     let calendar = {}
     calendar.events = []
-  
+
     let currentNode = calendar
     calendar.updateTime = Date.now()
-  
+
     // Read throught the raw string
-    for(let i = 0; i < lines.length; i++){
+    for (let i = 0; i < lines.length; i++) {
       let separationIndex = lines[i].indexOf(":")
-      if(separationIndex >= 0){
+      if (separationIndex >= 0) {
         // Read key and value 
         let key = lines[i].substring(0, separationIndex),
-          value = lines[i].substring(separationIndex+1)
+          value = lines[i].substring(separationIndex + 1)
 
-        switch(key) {
+        switch (key) {
           case "BEGIN":
-            if(value === "VEVENT"){
+            if (value === "VEVENT") {
               let event = {}
               calendar.events.push(event)
               currentNode = event
@@ -208,81 +208,81 @@ const parseRawCalendar = (raw, progressCallback=undefined) => {
         }
       } // Otherwise skip
     }
-  
+
     // Parseing finished, now fetch event webpage to fullfill the remaining information
     let todo = 0
-  
-    for(let i = 0; i < calendar.events.length; i++){
+
+    for (let i = 0; i < calendar.events.length; i++) {
       let event = calendar.events[i]
       // Get the course code
-      if("summary" in event){
+      if ("summary" in event) {
         let match = event.summary.match(/\((.*)\)/) || []
-        console.log("match:",match)
-        if(match.length > 1)
+        console.log("match:", match)
+        if (match.length > 1)
           event.code = match[1]
       }
-  
+
       // Get the event url
-      if("description" in event){
+      if ("description" in event) {
         let index = event.description.indexOf("\\n")
         let url
-        if(index >= 0)
+        if (index >= 0)
           url = event.description.substring(0, index)
-        else 
+        else
           url = event.description
         event.url = url
-        
+
         todo++
         notifyProgress(0, todo)
-  
+
         // Lets fetch the event content and parse it
         executeGet(url)
           .then(webpage => {
-           // console.log("webpage",webpage)
-  
+            // console.log("webpage",webpage)
+
             let startIndex = webpage.indexOf("<div class=\"calendarDetails\"")
-            
+
             let lines = webpage.substring(startIndex + "<div class=\"calendarDetails\"".length).split("\n")
             let endIndex = startIndex
             let open = 1,
               next = undefined
-            for(let i = 0; i < lines.length; i++){
+            for (let i = 0; i < lines.length; i++) {
               let trimed = lines[i].trim()
-              if(trimed.startsWith("<div")) {
+              if (trimed.startsWith("<div")) {
                 open++
-              } else if (trimed.startsWith("</div")){
+              } else if (trimed.startsWith("</div")) {
                 open--
-                if(open == 0){
-                  break 
+                if (open == 0) {
+                  break
                 }
-              } else if (trimed.startsWith('<span class="sub-header type" itemprop="eventType">')){
+              } else if (trimed.startsWith('<span class="sub-header type" itemprop="eventType">')) {
                 let lStart = '<span class="sub-header type" itemprop="eventType">'.length,
                   lEnd = trimed.length - '</span>'.length
-                event.type=translation.swToFr[trimed.substring(lStart,lEnd)]
-              } else if (lines[i].includes('<span class="sub-header place" itemprop="location">')){
+                event.type = translation.swToFr[trimed.substring(lStart, lEnd)]
+              } else if (lines[i].includes('<span class="sub-header place" itemprop="location">')) {
                 next = "location"
-              } else if (next == "location" && trimed.length > 1){
+              } else if (next == "location" && trimed.length > 1) {
                 next = undefined
                 try {
                   let lStart = trimed.indexOf('href="') + 'href="'.length,
-                    lEnd = trimed.indexOf('"',lStart)
+                    lEnd = trimed.indexOf('"', lStart)
                   event.locationUrl = trimed.substring(lStart, lEnd)
                   lStart = trimed.indexOf('>', lEnd) + 1
                   lEnd = trimed.indexOf("<", lStart)
                   event.location2 = trimed.substring(lStart, lEnd)
-                } catch(err) {}
+                } catch (err) { }
               }
               endIndex += lines[i].length
             }
-  
+
             //console.log("Updated event",event)
             //console.log("substring=",result)
             todo--
             notifyProgress(todo)
-            if(todo <= 0){
+            if (todo <= 0) {
               // Every event webpages have been fetch, resolve
               resolve(calendar)
-            } 
+            }
           })
       }
     }
@@ -295,8 +295,8 @@ const test = () => {
     .then(raw => {
       saveRawCalendar(raw)
       console.log("Calendar read ok")
-      parseRawCalendar(raw, (progress,max) => {
-        console.log(progress+"/"+max)
+      parseRawCalendar(raw, (progress, max) => {
+        console.log(progress + "/" + max)
       })
         .then(calendar => {
           saveParsedCalendar(calendar)
@@ -304,11 +304,11 @@ const test = () => {
               console.log("Parsed calendar saved")
             })
             .catch(error => {
-              console.error("Error while saving parsed calendar",error)
+              console.error("Error while saving parsed calendar", error)
             })
         })
         .catch(error => {
-          console.error("Error while parsing raw calendar",error)
+          console.error("Error while parsing raw calendar", error)
         })
     })
     .catch(err => {
@@ -317,27 +317,36 @@ const test = () => {
 }
 
 const getCalendar = async () => {
-    try {
-      cal = await getParsedCalendar()
-      return cal
-    } catch (err) {
-      let rawCalendar = await fetchCalendar()
-      let parsedCalendar = await parseRawCalendar(rawCalendar)
-      saveParsedCalendar(parsedCalendar)
-      return parsedCalendar
-    }
+  try {
+    cal = await getParsedCalendar()
+    return cal
+  } catch (err) {
+    let rawCalendar = await fetchCalendar()
+    let parsedCalendar = await parseRawCalendar(rawCalendar)
+    saveParsedCalendar(parsedCalendar)
+    return parsedCalendar
+  }
+}
+
+const updateCalendar = async () => {
+  let raw = await fetchCalendar()
+  saveRawCalendar(raw)
+  let parsed = await parseRawCalendar(raw)
+  saveParsedCalendar(parsed)
+  return parsed
 }
 
 module.exports = {
-    fetchCalendar: fetchCalendar,
-    parseRawCalendar: parseRawCalendar,
-    getCalendar: getCalendar,
+  fetchCalendar: fetchCalendar,
+  parseRawCalendar: parseRawCalendar,
+  getCalendar: getCalendar,
+  updateCalendar:updateCalendar,
 
-    getRawCalendar: getRawCalendar,
-    saveRawCalendar: saveRawCalendar,
+  getRawCalendar: getRawCalendar,
+  saveRawCalendar: saveRawCalendar,
 
-    saveParsedCalendar: saveParsedCalendar,
-    getParsedCalendar: getParsedCalendar,
-    
-    test: test,
+  saveParsedCalendar: saveParsedCalendar,
+  getParsedCalendar: getParsedCalendar,
+
+  test: test,
 }

@@ -11,6 +11,15 @@
 
     <button id="btn-reload" disabled>Reload</button>
 
+    <div class="progress-container">
+        <p id="progress-absolute">0/0</p>
+        <div id="progress-bar">
+            <div id="progress-done"></div>
+            <div id="progress-todo"></div>
+        </div>
+        <p id="progress-relative">0.0%</p>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="modules/CalendarBuilder.js"></script>
     <script src="calendar.js"></script> 

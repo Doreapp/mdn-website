@@ -6,6 +6,8 @@
     // Export
     class CalendarBuilder { }
 
+    const coursesToSkip = { "DD2257": true } // Vizualisation
+
     /**
      * Find the day of the event
      * @param {Object} event 
@@ -71,7 +73,7 @@
             if (event.location2 && event.location2 != event.location) {
                 location += " (" + event.location2 + ")"
             }
-            location = location.replaceAll("\\","")
+            location = location.replaceAll("\\", "")
             if (event.locationUrl) {
                 str += '<a href="' + event.locationUrl + '">' + location + "</a>"
             } else {
@@ -88,7 +90,7 @@
         return str
     }
 
-    
+
     /**
      * Set the calendar events to display on the webpage
      * @param {Array<Object>} events event list  
@@ -97,11 +99,11 @@
         // Create main table
         let table = document.createElement("table")
         table.classList.add("calendar")
-        
+
         let body = document.querySelector("body")
 
         let currentTable = body.querySelector("calendar")
-        if(currentTable){
+        if (currentTable) {
             body.removeChild(currentTable)
         }
 
@@ -115,9 +117,16 @@
 
         let currentDayHeader = undefined
         let elementToScroll = undefined
+        let pair = true
+
+        let eventsDone = 0, eventsCount = 0;
 
         for (let i = 0; i < events.length; i++) {
             let event = events[i]
+
+            if (event.code && event.code in coursesToSkip) {
+                continue
+            }
 
             // Create a day header if the day has changed
             if (!currentDay || dayOf(event).getTime() != currentDay.getTime()) {
@@ -151,7 +160,7 @@
 
             // Row of the event 
             let mainRow = document.createElement("tr")
-            mainRow.classList.add(i % 2 == 0 ? "pair" : "odd") // Used to change the background color
+            mainRow.classList.add(pair ? "pair" : "odd") // Used to change the background color
 
             // Start hour cell
             let hourCell = document.createElement("td")
@@ -170,7 +179,7 @@
 
             // End hour: needs a row and a cell
             let endHourRow = document.createElement("tr")
-            endHourRow.classList.add(i % 2 == 0 ? "pair" : "odd")
+            endHourRow.classList.add(pair ? "pair" : "odd")
             let endHourCell = document.createElement("td")
             endHourCell.classList.add("end-hour")
             endHourRow.appendChild(endHourCell)
@@ -182,12 +191,21 @@
                 // The event is finished
                 mainRow.classList.add("done")
                 endHourRow.classList.add("done")
+                eventsDone++
             } else if (!elementToScroll) {
                 elementToScroll = currentDayHeader
             }
+
+            eventsCount++
+            pair = !pair
         }
 
         scrollTo(0, elementToScroll.offsetTop)
+
+        return {
+            done: eventsDone,
+            total: eventsCount
+        }
     }
 
     window["CalendarBuilder"] = CalendarBuilder

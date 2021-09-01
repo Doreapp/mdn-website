@@ -79,6 +79,11 @@
             } else {
                 str += location
             }
+
+            if (event.locationCoordinates){
+                str += ' <button onclick="displayLocation('+event.locationCoordinates.lat+','+event.locationCoordinates.lng+')">Display location</button>'
+            }
+
             str += "<br>"
         }
 
@@ -210,3 +215,15 @@
 
     window["CalendarBuilder"] = CalendarBuilder
 })()
+
+/**
+ * Display the map dialog with the matching location
+ * @param {number} lat latitude 
+ * @param {number} lng longitude 
+ */
+function displayLocation(lat, lng) {
+    let map = document.querySelector("#map-dialog")
+    map.style.display = "block"
+    map.firstElementChild.src = "https://maps.google.com/maps?q="+lat+","+lng+"&zoom=20&ie=UTF8&output=embed&iwloc=&iwd=0"
+    
+}

@@ -2,11 +2,13 @@ const https = require('https'),
   fs = require('fs'),
   path = require("path"),
   translation = require("./Translation.js")
+const { resolve } = require('path')
 
 // Files
 const cacheFolder = path.join(__dirname, ".cache"), // Main cache folder
   rawCalendarFile = path.join(cacheFolder, "rawCalendar.ics"), // rawCalendar file
-  parsedCalenderFile = path.join(cacheFolder, "calendar.json") // parsed calendar file
+  parsedCalenderFile = path.join(cacheFolder, "calendar.json"), // parsed calendar file
+  locationFile = path.join(cacheFolder, "location.json")
 
 // Calendar URL
 const URL = "https://www.kth.se/social/user/282379/icalendar/b5167b5d6e589f7c7bc356529c66bcdf6721b93c"
@@ -17,7 +19,7 @@ const URL = "https://www.kth.se/social/user/282379/icalendar/b5167b5d6e589f7c7bc
  * @returns promise
  */
 const saveRawCalendar = (raw) => {
-  console.log("Saving raw calendar into "+rawCalendarFile+", "+raw.length+" characters")
+  console.log("Saving raw calendar into " + rawCalendarFile + ", " + raw.length + " characters")
   return new Promise((resolve, reject) => {
     fs.writeFile(rawCalendarFile, raw, function (err) {
       if (err) {
@@ -51,7 +53,7 @@ const getRawCalendar = () => {
  * @returns promise
  */
 const saveParsedCalendar = (json) => {
-  console.log("Saving parsed calendar into "+parsedCalenderFile)
+  console.log("Saving parsed calendar into " + parsedCalenderFile)
   return new Promise((resolve, reject) => {
     fs.writeFile(parsedCalenderFile, JSON.stringify(json), function (err) {
       if (err) {
@@ -92,7 +94,7 @@ const getParsedCalendar = () => {
  * @returns Promise, when fullfiled, provide the request response content (body)
  */
 const executeGet = (url) => {
-  console.log("GET "+url)
+  console.log("GET " + url)
   return new Promise((resolve, reject) => {
     const req = https.request(url,
       {
@@ -206,13 +208,18 @@ const parseRawCalendar = (raw) => {
       } // Otherwise skip
     }
 
-    console.log("Calendar parsed, "+calendar.events.length+" events found")
+    console.log("Calendar parsed, " + calendar.events.length + " events found")
     resolve(calendar)
   })
 }
 
+/**
+ * Append information from distance webpage to events
+ * @param {object} calendar 
+ * @returns updated calendar
+ */
 const appendInformationUsingUrl = (calendar) => {
-  console.log("Request to fetch information for "+calendar.events.length+" events")
+  console.log("Request to fetch information for " + calendar.events.length + " events")
   return new Promise((resolve, reject) => {
 
     // Parseing finished, now fetch event webpage to fullfill the remaining information
@@ -241,7 +248,7 @@ const appendInformationUsingUrl = (calendar) => {
 
         // Lets fetch the event content and parse it
         executeGet(url)
-          .then(webpage => {
+          .then(async (webpage) => {
             // console.log("webpage",webpage)
 
             let startIndex = webpage.indexOf("<div class=\"calendarDetails\"")
@@ -271,10 +278,13 @@ const appendInformationUsingUrl = (calendar) => {
                   let lStart = trimed.indexOf('href="') + 'href="'.length,
                     lEnd = trimed.indexOf('"', lStart)
                   event.locationUrl = trimed.substring(lStart, lEnd)
+                  event.locationCoordinates = await LocationFinder.getLocation(event.locationUrl)
                   lStart = trimed.indexOf('>', lEnd) + 1
                   lEnd = trimed.indexOf("<", lStart)
                   event.location2 = trimed.substring(lStart, lEnd)
-                } catch (err) { }
+                } catch (err) { 
+                  console.log("skipped err:",err)
+                }
               }
               endIndex += lines[i].length
             }
@@ -317,6 +327,10 @@ const test = () => {
     })
 }
 
+/**
+ * Find calendar, from cached calendar or distante calendar
+ * @returns 
+ */
 const getCalendar = async () => {
   try {
     cal = await getParsedCalendar()
@@ -342,6 +356,11 @@ const same = (o1, o2, except = []) => {
   return JSON.stringify(clone1) == JSON.stringify(clone2)
 }
 
+/**
+ * Update the saved calendar, search for different events (added/removed)
+ * @param {Object} before current calendar 
+ * @returns updated calendar
+ */
 const updateCalendar = async (before = undefined) => {
   let raw = await fetchCalendar()
   saveRawCalendar(raw)
@@ -351,7 +370,7 @@ const updateCalendar = async (before = undefined) => {
   if (before) {
     let toFill = []
     let events = []
-    const except = ["code", "url", "type", "location2", "locationUrl"]
+    const except = ["code", "url", "type", "location2", "locationUrl", "locationCoordinates"]
 
     let removedCount = 0, addedCount = 0
 
@@ -367,15 +386,15 @@ const updateCalendar = async (before = undefined) => {
       }
 
       if (found) {
-        for(; j < x; j++){
+        for (; j < x; j++) {
           // Add new events to toFill
-          toFill.push(parsedCalendar.events[i]) 
+          toFill.push(parsedCalendar.events[i])
         }
-        if(toFill.length > 0){
-          let tmp = {events: toFill}
+        if (toFill.length > 0) {
+          let tmp = { events: toFill }
           appendInformationUsingUrl(tmp)
 
-          for(let a = 0; a < tmp.events.length; a++){
+          for (let a = 0; a < tmp.events.length; a++) {
             addedCount++
             events.push(tmp.events[a])
           }
@@ -391,7 +410,7 @@ const updateCalendar = async (before = undefined) => {
 
     before.events = events
 
-    console.log("Updated the calendar, "+removedCount+" events removed and "+addedCount+" events added")
+    console.log("Updated the calendar, " + removedCount + " events removed and " + addedCount + " events added")
 
     saveParsedCalendar(before)
     return before
@@ -400,6 +419,54 @@ const updateCalendar = async (before = undefined) => {
     saveParsedCalendar(filledCalendar)
     return filledCalendar
   }
+}
+
+class LocationFinder { }
+
+LocationFinder.getInstance = () => {
+  if (!LocationFinder.instance) {
+    try {
+      LocationFinder.instance = JSON.parse(fs.readFileSync(locationFile, "utf-8"))
+    } catch (err) {
+      LocationFinder.instance = {}
+    }
+  }
+  return LocationFinder.instance
+}
+
+LocationFinder.save = () => {
+  fs.writeFileSync(locationFile, JSON.stringify(LocationFinder.getInstance()))
+}
+
+LocationFinder.getLocation = async (url) => {
+  let instance = LocationFinder.getInstance()
+  if (url in instance) {
+    return instance[url]
+  }
+  let location = await getLocationInformation(url)
+  instance[url] = location
+  LocationFinder.save()
+  return location
+}
+
+const getLocationInformation = url => {
+  return new Promise((resolve, reject) => {
+    executeGet(url)
+      .then(html => {
+        let matches = html.match(/https?:\/\/www.google.com\/maps\/place\/([0-9]+\.[0-9]+),([0-9.]+\.[0-9]+)/) || []
+        if (matches.length >= 3) {
+          let latLng = {
+            lat: matches[1],
+            lng: matches[2]
+          }
+          console.log("Location found: ", latLng)
+          resolve(latLng)
+        }
+      })
+      .catch(error => {
+        reject(error)
+      })
+  })
 }
 
 module.exports = {

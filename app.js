@@ -36,6 +36,11 @@ io.of("/calendar").on("connection", socket => {
         .then(calendar => {
             console.log("sending calendar")
             socket.emit("calendar", calendar)
+            CalendarFetch.updateCalendar(calendar)
+                .then(calendar => {
+                    console.log("sending updated calendar")
+                    socket.emit("calendar", calendar)
+                })
         })
         .catch(error => {
             console.error("Error getting calendar:", error)
@@ -46,13 +51,11 @@ io.of("/calendar").on("connection", socket => {
         CalendarFetch.updateCalendar()
             .then(calendar => {
                 console.log("sending calendar")
-                socket.emit("calendar",calendar)
+                socket.emit("calendar", calendar)
             })
             .catch(error => {
                 console.error("Error reloading calendar:", error)
             })
     })
-    //TODO sokcet on "update calendar"
 })
 
-//CalendarFetch.test()

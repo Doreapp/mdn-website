@@ -17,6 +17,7 @@ const URL = "https://www.kth.se/social/user/282379/icalendar/b5167b5d6e589f7c7bc
  * @returns promise
  */
 const saveRawCalendar = (raw) => {
+  console.log("Saving raw calendar into "+rawCalendarFile+", "+raw.length+" characters")
   return new Promise((resolve, reject) => {
     fs.writeFile(rawCalendarFile, raw, function (err) {
       if (err) {
@@ -50,6 +51,7 @@ const getRawCalendar = () => {
  * @returns promise
  */
 const saveParsedCalendar = (json) => {
+  console.log("Saving parsed calendar into "+parsedCalenderFile)
   return new Promise((resolve, reject) => {
     fs.writeFile(parsedCalenderFile, JSON.stringify(json), function (err) {
       if (err) {
@@ -90,6 +92,7 @@ const getParsedCalendar = () => {
  * @returns Promise, when fullfiled, provide the request response content (body)
  */
 const executeGet = (url) => {
+  console.log("GET "+url)
   return new Promise((resolve, reject) => {
     const req = https.request(url,
       {
@@ -124,6 +127,7 @@ const executeGet = (url) => {
  * @returns promise, when fullfiled provides the raw calendar file content
  */
 const fetchCalendar = (url = URL) => {
+  console.log("Fetch calendar")
   return executeGet(url)
 }
 
@@ -146,18 +150,11 @@ const parseDatetime = str => {
  * Parse the raw calendar
  * @param {string} raw raw calendar content 
  */
-const parseRawCalendar = (raw, progressCallback = undefined) => {
+const parseRawCalendar = (raw) => {
   return new Promise((resolve, reject) => {
     console.log("Parsing started")
 
     let currentMax = 0
-    const notifyProgress = (progress, max = undefined) => {
-      if (max)
-        currentMax = max
-      if (progressCallback)
-        progressCallback(progress, currentMax)
-    }
-
     // Build with full lines
     let lines = raw.replace(/\r?\n /g, "").split(/\r?\n/)
 
@@ -209,6 +206,15 @@ const parseRawCalendar = (raw, progressCallback = undefined) => {
       } // Otherwise skip
     }
 
+    console.log("Calendar parsed, "+calendar.events.length+" events found")
+    resolve(calendar)
+  })
+}
+
+const appendInformationUsingUrl = (calendar) => {
+  console.log("Request to fetch information for "+calendar.events.length+" events")
+  return new Promise((resolve, reject) => {
+
     // Parseing finished, now fetch event webpage to fullfill the remaining information
     let todo = 0
 
@@ -217,7 +223,6 @@ const parseRawCalendar = (raw, progressCallback = undefined) => {
       // Get the course code
       if ("summary" in event) {
         let match = event.summary.match(/\((.*)\)/) || []
-        console.log("match:", match)
         if (match.length > 1)
           event.code = match[1]
       }
@@ -233,7 +238,6 @@ const parseRawCalendar = (raw, progressCallback = undefined) => {
         event.url = url
 
         todo++
-        notifyProgress(0, todo)
 
         // Lets fetch the event content and parse it
         executeGet(url)
@@ -278,7 +282,6 @@ const parseRawCalendar = (raw, progressCallback = undefined) => {
             //console.log("Updated event",event)
             //console.log("substring=",result)
             todo--
-            notifyProgress(todo)
             if (todo <= 0) {
               // Every event webpages have been fetch, resolve
               resolve(calendar)
@@ -295,9 +298,7 @@ const test = () => {
     .then(raw => {
       saveRawCalendar(raw)
       console.log("Calendar read ok")
-      parseRawCalendar(raw, (progress, max) => {
-        console.log(progress + "/" + max)
-      })
+      parseRawCalendar(raw)
         .then(calendar => {
           saveParsedCalendar(calendar)
             .then(() => {
@@ -323,24 +324,89 @@ const getCalendar = async () => {
   } catch (err) {
     let rawCalendar = await fetchCalendar()
     let parsedCalendar = await parseRawCalendar(rawCalendar)
-    saveParsedCalendar(parsedCalendar)
-    return parsedCalendar
+    let filledCalendar = await appendInformationUsingUrl(parsedCalendar)
+    saveParsedCalendar(filledCalendar)
+    return filledCalendar
   }
 }
 
-const updateCalendar = async () => {
+const same = (o1, o2, except = []) => {
+  let clone1 = { ...o1 },
+    clone2 = { ...o2 }
+
+  for (let i = 0; i < except.length; i++) {
+    clone1[except[i]] = undefined
+    clone2[except[i]] = undefined
+  }
+
+  return JSON.stringify(clone1) == JSON.stringify(clone2)
+}
+
+const updateCalendar = async (before = undefined) => {
   let raw = await fetchCalendar()
   saveRawCalendar(raw)
-  let parsed = await parseRawCalendar(raw)
-  saveParsedCalendar(parsed)
-  return parsed
+
+  let parsedCalendar = await parseRawCalendar(raw)
+
+  if (before) {
+    let toFill = []
+    let events = []
+    const except = ["code", "url", "type", "location2", "locationUrl"]
+
+    let removedCount = 0, addedCount = 0
+
+    for (let i = 0, j = 0; i < before.events.length && j < parsedCalendar.events.length; i++, j++) {
+      let found = false
+
+      let x = j
+      for (; x < parsedCalendar.events.length; x++) {
+        if (same(before.events[i], parsedCalendar.events[j], except)) {
+          found = true
+          break
+        }
+      }
+
+      if (found) {
+        for(; j < x; j++){
+          // Add new events to toFill
+          toFill.push(parsedCalendar.events[i]) 
+        }
+        if(toFill.length > 0){
+          let tmp = {events: toFill}
+          appendInformationUsingUrl(tmp)
+
+          for(let a = 0; a < tmp.events.length; a++){
+            addedCount++
+            events.push(tmp.events[a])
+          }
+
+          toFill = []
+        }
+
+        events.push(before.events[i])
+      } else {
+        removedCount++
+      }
+    }
+
+    before.events = events
+
+    console.log("Updated the calendar, "+removedCount+" events removed and "+addedCount+" events added")
+
+    saveParsedCalendar(before)
+    return before
+  } else {
+    let filledCalendar = await appendInformationUsingUrl(parsedCalendar)
+    saveParsedCalendar(filledCalendar)
+    return filledCalendar
+  }
 }
 
 module.exports = {
   fetchCalendar: fetchCalendar,
   parseRawCalendar: parseRawCalendar,
   getCalendar: getCalendar,
-  updateCalendar:updateCalendar,
+  updateCalendar: updateCalendar,
 
   getRawCalendar: getRawCalendar,
   saveRawCalendar: saveRawCalendar,

@@ -16,3 +16,11 @@ npm install --production
 sudo PORT=80 node app.js
 ```
 Open [http://ec2-18-221-45-36.us-east-2.compute.amazonaws.com/](http://ec2-18-221-45-36.us-east-2.compute.amazonaws.com/)
+
+## Infinitelly
+```
+screen 
+npm install --production
+sudo PORT=80 node app.js
+```
+The `CTRL`+`A`+`D`

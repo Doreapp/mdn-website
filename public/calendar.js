@@ -55,6 +55,8 @@
     socket.on("calendar", cal => {
         calendar = cal
 
+        console.log("Calendar: ",calendar)
+
         let stats = CalendarBuilder.setEvents(cal.events)
         _qs("#btn-reload").disabled = false
 

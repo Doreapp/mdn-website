@@ -282,8 +282,8 @@ const appendInformationUsingUrl = (calendar) => {
                   lStart = trimed.indexOf('>', lEnd) + 1
                   lEnd = trimed.indexOf("<", lStart)
                   event.location2 = trimed.substring(lStart, lEnd)
-                } catch (err) { 
-                  console.log("skipped err:",err)
+                } catch (err) {
+                  console.log("skipped err:", err)
                 }
               }
               endIndex += lines[i].length
@@ -373,8 +373,9 @@ const updateCalendar = async (before = undefined) => {
     const except = ["code", "url", "type", "location2", "locationUrl", "locationCoordinates"]
 
     let removedCount = 0, addedCount = 0
+    let i = 0, j = 0
 
-    for (let i = 0, j = 0; i < before.events.length && j < parsedCalendar.events.length; i++, j++) {
+    for (; i < before.events.length && j < parsedCalendar.events.length; i++, j++) {
       let found = false
 
       let x = j
@@ -388,7 +389,7 @@ const updateCalendar = async (before = undefined) => {
       if (found) {
         for (; j < x; j++) {
           // Add new events to toFill
-          toFill.push(parsedCalendar.events[i])
+          toFill.push(parsedCalendar.events[j])
         }
         if (toFill.length > 0) {
           let tmp = { events: toFill }
@@ -408,9 +409,23 @@ const updateCalendar = async (before = undefined) => {
       }
     }
 
+    toFill = []
+    for (; j < parsedCalendar.events.length; j++) {
+      toFill.push(parsedCalendar.events[j])
+    }
+    if (toFill.length > 0) {
+      let tmp = { events: toFill }
+      appendInformationUsingUrl(tmp)
+
+      for (let a = 0; a < tmp.events.length; a++) {
+        addedCount++
+        events.push(tmp.events[a])
+      }
+    }
+
     before.events = events
 
-    console.log("Updated the calendar, " + removedCount + " events removed and " + addedCount + " events added")
+    console.log("Updated the calendar, " + removedCount + " events removed and " + addedCount + " events added, total: " + events.length)
 
     saveParsedCalendar(before)
     return before
@@ -459,7 +474,6 @@ const getLocationInformation = url => {
             lat: matches[1],
             lng: matches[2]
           }
-          console.log("Location found: ", latLng)
           resolve(latLng)
         }
       })

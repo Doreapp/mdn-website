@@ -205,7 +205,8 @@
             pair = !pair
         }
 
-        scrollTo(0, elementToScroll.offsetTop)
+        if(elementToScroll)
+            scrollTo(0, elementToScroll.offsetTop)
 
         return {
             done: eventsDone,

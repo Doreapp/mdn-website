@@ -107,7 +107,7 @@
 
         let body = document.querySelector("body")
 
-        let currentTable = body.querySelector("calendar")
+        let currentTable = body.querySelector(".calendar")
         if (currentTable) {
             body.removeChild(currentTable)
         }

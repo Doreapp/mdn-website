@@ -1,6 +1,6 @@
 html {
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 2em;
+    /*font-size: 2em;*/
 }
 
 table {
@@ -77,14 +77,14 @@ tr.done {
 }
 
 button {
-    font-size: 0.7  em;
+    /*font-size: 0.7  em;*/
 }
 
 #map-dialog {
     position: fixed;
-    width: 60%;
+    width: 80%;
     height: 60%;
-    left: 20%;
+    left: 10%;
     top: 20%;
     display: none;
 }

@@ -4,3 +4,4 @@ modules/.cache/*
 EBSampleApp-Nodejs.iml
 cron.yaml
 package-lock.json
+*.zip

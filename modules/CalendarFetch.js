@@ -1,8 +1,8 @@
 const https = require('https'),
   fs = require('fs'),
   path = require("path"),
-  translation = require("./Translation.js")
-const { resolve } = require('path')
+  translation = require("./Translation.js"),
+  Logger = require("./Logger.js")
 
 // Files
 const cacheFolder = path.join(__dirname, ".cache"), // Main cache folder
@@ -20,6 +20,7 @@ const URL = "https://www.kth.se/social/user/282379/icalendar/b5167b5d6e589f7c7bc
  */
 const saveRawCalendar = (raw) => {
   console.log("Saving raw calendar into " + rawCalendarFile + ", " + raw.length + " characters")
+  Logger.log("CalendarFetch","saving raw calendar")
   return new Promise((resolve, reject) => {
     fs.writeFile(rawCalendarFile, raw, function (err) {
       if (err) {
@@ -36,6 +37,7 @@ const saveRawCalendar = (raw) => {
  * @returns Promise, when fullfiled, provides the file content 
  */
 const getRawCalendar = () => {
+  Logger.log("CalendarFetch","Reading raw calendar")
   return new Promise((resolve, reject) => {
     fs.readFile(rawCalendarFile, "utf-8", function (err, data) {
       if (err) {
@@ -54,6 +56,7 @@ const getRawCalendar = () => {
  */
 const saveParsedCalendar = (json) => {
   console.log("Saving parsed calendar into " + parsedCalenderFile)
+  Logger.log("CalendarFetch","Saving parsed calendar")
   return new Promise((resolve, reject) => {
     fs.writeFile(parsedCalenderFile, JSON.stringify(json), function (err) {
       if (err) {
@@ -70,6 +73,7 @@ const saveParsedCalendar = (json) => {
  * @returns promise, once fullfiled provides the calendar object 
  */
 const getParsedCalendar = () => {
+  Logger.log("CalendarFetch","Reading parsed calendar")
   return new Promise((resolve, reject) => {
     fs.readFile(parsedCalenderFile, "utf-8", function (err, data) {
       if (err) {
@@ -85,7 +89,6 @@ const getParsedCalendar = () => {
     })
   })
 }
-
 
 /**
  * Execute a HTTPS GET request. 
@@ -130,6 +133,7 @@ const executeGet = (url) => {
  */
 const fetchCalendar = (url = URL) => {
   console.log("Fetch calendar")
+  Logger.log("CalendarFetch","Fetching remote calendar")
   return executeGet(url)
 }
 
@@ -156,7 +160,6 @@ const parseRawCalendar = (raw) => {
   return new Promise((resolve, reject) => {
     console.log("Parsing started")
 
-    let currentMax = 0
     // Build with full lines
     let lines = raw.replace(/\r?\n /g, "").split(/\r?\n/)
 
@@ -208,6 +211,7 @@ const parseRawCalendar = (raw) => {
       } // Otherwise skip
     }
 
+    Logger.log("CalendarFetch","Raw calendar parsed. "+calendar.events.length+" events found")
     console.log("Calendar parsed, " + calendar.events.length + " events found")
     resolve(calendar)
   })
@@ -332,6 +336,7 @@ const test = () => {
  * @returns 
  */
 const getCalendar = async () => {
+  Logger.log("CalendarFetch","Request to get calendar")
   try {
     cal = await getParsedCalendar()
     return cal
@@ -362,6 +367,7 @@ const same = (o1, o2, except = []) => {
  * @returns updated calendar
  */
 const updateCalendar = async (before = undefined) => {
+  Logger.log("CalendarFetch","Request to update the calendar")
   let raw = await fetchCalendar()
   saveRawCalendar(raw)
 
@@ -426,6 +432,7 @@ const updateCalendar = async (before = undefined) => {
     before.events = events
 
     console.log("Updated the calendar, " + removedCount + " events removed and " + addedCount + " events added, total: " + events.length)
+    Logger.log("CalendarFetch","Calendar updated. "+removedCount+" events removed. "+addedCount+" events added. "+events.length+" events in the calendar.")
 
     saveParsedCalendar(before)
     return before
@@ -440,6 +447,7 @@ class LocationFinder { }
 
 LocationFinder.getInstance = () => {
   if (!LocationFinder.instance) {
+    Logger.log("CalendarFetch","Building LocationFinder instance")
     try {
       LocationFinder.instance = JSON.parse(fs.readFileSync(locationFile, "utf-8"))
     } catch (err) {

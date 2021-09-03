@@ -4,7 +4,8 @@ const port = process.env.PORT || 3000,
     path = require("path"),
     express = require("express"),
     socketIO = require("socket.io"),
-    CalendarFetch = require("./modules/CalendarFetch.js")
+    CalendarFetch = require("./modules/CalendarFetch.js"),
+    Logger = require("./modules/Logger.js")
 
 const app = express()
 app.use(express.static("public"))
@@ -26,7 +27,8 @@ app.get("/cache/calendar", (req, res) => {
 })
 
 // Clear cache
-const clearCache = async () => {
+const clearCache = async() => {
+    Logger.log("Server", "Clearing cache")
     try {
         await fs.rmSync(path.join(__dirname, "/modules/.cache"), { recursive: true })
     } catch (err) {
@@ -42,8 +44,9 @@ clearCache()
 
 
 // Launch server (IPV4 only)
-let server = app.listen(port, "0.0.0.0", async () => {
+let server = app.listen(port, "0.0.0.0", async() => {
     console.log('Server running at http://127.0.0.1:' + port + '/');
+    Logger.log("Server","Server running, using port " + port)
 })
 
 // Init the socket
@@ -54,36 +57,39 @@ let io = socketIO(server, {
 
 io.of("/calendar").on("connection", socket => {
     console.log("Connection from /calendar")
+    Logger.log("Server","Connection from /calendar io")
 
     let currentCalendar = {}
 
     CalendarFetch.getCalendar()
         .then(calendar => {
-            console.log("sending calendar")
+            Logger.log("Server","sending calendar to client")
             socket.emit("calendar", calendar)
             currentCalendar = calendar;
             CalendarFetch.updateCalendar(calendar)
                 .then(calendar => {
-                    console.log("sending updated calendar")
+                    Logger.log("Server","calendar updated. Sending up-to-date version to client")
                     socket.emit("calendar", calendar)
                     currentCalendar = calendar
                 })
         })
         .catch(error => {
             console.error("Error getting calendar:", error)
+            Logger.log("Server","Error getting calendar: "+JSON.stringify(error))
         })
 
     socket.on("reload", () => {
         console.log("Request to reload the calendar")
+        Logger.log("Server","Request from client to reload the calender")
         CalendarFetch.updateCalendar(currentCalendar)
             .then(calendar => {
-                console.log("sending calendar")
+                Logger.log("Server","Calendar updated. Sending up-to-date version to client")
                 socket.emit("calendar", calendar)
                 currentCalendar = calendar
             })
             .catch(error => {
                 console.error("Error reloading calendar:", error)
+                Logger.log("Server", "Error reloading calendar: "+JSON.stringify(error))
             })
     })
 })
-

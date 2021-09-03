@@ -5,3 +5,4 @@ EBSampleApp-Nodejs.iml
 cron.yaml
 package-lock.json
 *.zip
+*.log

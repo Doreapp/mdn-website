@@ -5,6 +5,7 @@ const port = process.env.PORT || 3000,
     express = require("express"),
     socketIO = require("socket.io"),
     CalendarFetch = require("./modules/CalendarFetch.js"),
+    InstagramScrapper = require("./modules/InstagramScrapper.js"),
     Logger = require("./modules/Logger.js")
 
 const app = express()
@@ -15,8 +16,31 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "/public/index.html"))
 })
 
+const swedenFolder = path.join(__dirname, "/public/sweden"),
+    baseSwedenRoute = "/sweden"
+fs.readdir(swedenFolder, (err, files) => {
+    if(err){
+        console.err("Error reading dir 'sweden'",err)
+        return
+    }
+    
+    files.forEach(file => {
+        if(file.endsWith(".html")) {
+            if(file == "index.html") {
+                app.get(baseSwedenRoute, (req, res) => {
+                    res.sendFile(path.join(swedenFolder, file))
+                })
+            } else {
+                app.get(baseSwedenRoute + "/" + file.substring(0, file.length-5), (req, res) => {
+                    res.sendFile(path.join(swedenFolder, file))
+                })
+            }
+        }
+    }) 
+})
+
 app.get("/calendar", (req, res) => {
-    res.sendFile(path.join(__dirname, "/public/calendar.html"))
+    res.sendFile()
 })
 
 app.get("/cache/location", (req, res) => {

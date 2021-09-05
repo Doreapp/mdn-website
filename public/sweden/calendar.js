@@ -68,4 +68,6 @@
         socket.emit("reload")
         event.target.disabled = true
     }
+
+    Mdn.init()
 })()

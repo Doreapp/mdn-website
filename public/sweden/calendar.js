@@ -57,7 +57,7 @@
 
         console.log("Calendar: ",calendar)
 
-        let stats = CalendarBuilder.setEvents(cal.events)
+        let stats = CalendarBuilder.setEvents2(cal.events)
         _qs("#btn-reload").disabled = false
 
         setProgress(stats.done, stats.total)

@@ -39,10 +39,6 @@ fs.readdir(swedenFolder, (err, files) => {
     }) 
 })
 
-app.get("/calendar", (req, res) => {
-    res.sendFile()
-})
-
 app.get("/cache/location", (req, res) => {
     res.sendFile(path.join(__dirname, "/modules/.cache/location.json"))
 })

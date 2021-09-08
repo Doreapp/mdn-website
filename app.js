@@ -117,3 +117,5 @@ io.of("/calendar").on("connection", socket => {
             })
     })
 })
+
+InstagramScrapper.test()

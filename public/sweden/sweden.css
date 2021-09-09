@@ -6,8 +6,6 @@ div.day {
     background-color: grey;
 }
 
-
-
 table {
     border-collapse: collapse;
 }
@@ -16,7 +14,6 @@ td {
     padding: 3px;
 }
 
-
 tr {
   border-top: 1px solid #666666;
 }
@@ -24,7 +21,6 @@ tr {
 tr:first-child {
     border-top: 0px;
 }
-
 
 div.day .header {
     margin-bottom: 5px;
@@ -42,24 +38,6 @@ div.day .courses-container {
 
 div.day.done table {
     background-color: lightgray;
-}
-
-div.day .event {
-    padding: 5px;
-    margin: 5px;
-    border-radius: 5px;
-    border: solid 1px grey;
-}
-
-
-td.start-hour {
-    vertical-align: top;
-    padding-right: 4px;
-}
-
-td.end-hour {
-    vertical-align: bottom;
-    padding-right: 4px;
 }
 
 .progress-container {

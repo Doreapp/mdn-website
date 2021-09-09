@@ -6,6 +6,26 @@ div.day {
     background-color: grey;
 }
 
+
+
+table {
+    border-collapse: collapse;
+}
+
+td {
+    padding: 3px;
+}
+
+
+tr {
+  border-top: 1px solid #666666;
+}
+
+tr:first-child {
+    border-top: 0px;
+}
+
+
 div.day .header {
     margin-bottom: 5px;
     padding: 5px;
@@ -16,7 +36,12 @@ div.day .header {
 
 div.day .courses-container {
     border-radius: 5px;
-    background-color: whitesmoke;
+    background-color: white;
+    width: 100%;
+}
+
+div.day.done table {
+    background-color: lightgray;
 }
 
 div.day .event {
@@ -72,6 +97,14 @@ td.end-hour {
     display: none;
 }
 
+.empty-cell {
+    height: 30px;
+}
+
+.event-content {
+    height:100%;
+}
+
 #map-dialog > iframe {
     width: 100%;
     height: 100%;
@@ -99,10 +132,26 @@ a[type=section] {
     padding: 1em;
     color: black;
     text-decoration: none;
+
 }
+
+td.hour {
+    vertical-align: bottom;
+    border-right: 1px solid #666666;
+}
+
+td.course {
+    border-left: 1px solid #666666;
+}
+
+td.empty-cell {
+    border-left: 1px solid #666666;
+}
+
 
 #calendar-section {
     border: solid red;
 }
+
 
 

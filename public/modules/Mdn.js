@@ -69,5 +69,17 @@
         })
     }
 
+    Mdn.apiCall = (domain, request, args={}) => {
+        log("API call to "+domain+" for "+request, args)
+        return new Promise((resolve, reject) => {
+            let url = '/'+domain+"/api/"+"?command="+request
+            //TODO handle args
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.open( "GET", url, false ); // false for synchronous request
+            xmlHttp.send( null );
+            resolve(JSON.parse(xmlHttp.responseText))
+        })
+    }
+
     window["Mdn"]=Mdn
 })()

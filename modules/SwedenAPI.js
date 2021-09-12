@@ -1,9 +1,14 @@
 // API for the sweden
 const CalendarFetch = require("./CalendarFetch"),
-    Constants = require("../constants")
+    Constants = require("../constants"),
+    Logger = require("./Logger")
 
-let currentCalendar = undefined
-
+/**
+ * Get the calendar and return it
+ * @param {Object} options request options. unused. 
+ * @param {Response} response response to the client 
+ * @returns status code of the response
+ */
 const getCalendar = (options, response) => {
     CalendarFetch.getCalendar()
         .then(calendar => {
@@ -19,6 +24,12 @@ const getCalendar = (options, response) => {
     return 200
 }
 
+/**
+ * Update the calendar and return it
+ * @param {Object} options request options. unused. 
+ * @param {Response} response response to the client 
+ * @returns status code of the response
+ */
 const updateCalendar = (options, response) => {
     console.log("Request to reload the calendar")
     CalendarFetch.updateCalendar(currentCalendar)
@@ -32,13 +43,35 @@ const updateCalendar = (options, response) => {
     return 200
 }
 
+/**
+ * Get the statistics on the duration in sweden and return these
+ * @param {Object} options request options. unused. 
+ * @param {Response} response response to the client 
+ * @returns status code of the response
+ */
 const getDurationStatistics = (options, response) => {
-    //TODO
+    Logger.log("SwedenAPI", "Requet for the duration statistics")
+
+    let now = new Date()
+    let start = new Date(Constants.sweden.startDate)
+    let end = new Date(Constants.sweden.endDate)
+
+    let total = Math.floor((end - start) / (1000 * 60 * 60 * 24))
+    let done = Math.floor((now - start) / (1000 * 60 * 60 * 24))
+
+    let result = {
+        total: total,
+        done: done
+    }
+
+    response.status(200).send(JSON.stringify(result))
+    return 200
 }
 
 const commands = {
     'getCalendar': getCalendar,
     'updateCalendar': updateCalendar,
+    'getDurationStatistics': getDurationStatistics,
 }
 
 const handleRequest = (query, response) => {

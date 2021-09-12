@@ -8,7 +8,8 @@ const https = require('https'),
 const cacheFolder = path.join(__dirname, ".cache"), // Main cache folder
   rawCalendarFile = path.join(cacheFolder, "rawCalendar.ics"), // rawCalendar file
   parsedCalenderFile = path.join(cacheFolder, "calendar.json"), // parsed calendar file
-  locationFile = path.join(cacheFolder, "location.json")
+  locationFile = path.join(cacheFolder, "location.json"),
+  coursesTasksFile = path.join(__dirname, "..", "courses-tasks.txt")
 
 // Calendar URL
 const URL = "https://www.kth.se/social/user/282379/icalendar/b5167b5d6e589f7c7bc356529c66bcdf6721b93c"
@@ -488,6 +489,61 @@ const getLocationInformation = url => {
       .catch(error => {
         reject(error)
       })
+  })
+}
+
+/**
+ * Fetch and parse courses-tasks.txt file
+ * @returns Promise. Once resolved, provide the courses tasks"
+ */
+const getCoursesTasks = () => {
+  // Parse a date string with the format DD-MM
+  let parseDate = str => {
+    let splits = str.split("-")
+    let day = parseInt(splits[0])
+    let month = parseInt(splits[1])-1
+    let year = 2021
+    if(month < 8){
+      year++
+    }
+    return new Date(year, month, day, 12)
+  }
+
+  // Parse the file courses tasks
+  let parseFile = text => {
+    let result = {}
+    let lines = text.split("\n")
+    let currentName = undefined
+
+    for(let i = 0; i < lines.length; i++){
+      if(lines[i].startsWith("    ")){
+        let information = {}
+        let values = lines[i].trim().split(";")
+        information.date = parseDate(values[0])
+        information.summary = values[1]
+        result[currentName].push(information)
+      } else {
+        currentName = lines[i].trim()
+        result[currentName] = []
+      }
+    }
+    return result
+  }
+
+  return new Promise((resolve, reject) => {
+    // Read the file
+    fs.readFile(coursesTasksFile, "utf-8", function (err, data) {
+      if (err) {
+        reject(err)
+      } else {
+        try {
+          let json = parseFile(data)
+          resolve(json)
+        } catch (err) {
+          reject(err)
+        }
+      }
+    })
   })
 }
 

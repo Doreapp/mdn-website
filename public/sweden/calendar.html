@@ -5,6 +5,7 @@
     <title>KTH Calendar 2021</title>
     <link rel="stylesheet" href="../general.css">
     <link rel="stylesheet" href="sweden.css">
+    <link rel="stylesheet" href="../modules/Mdn.css">
     <meta name="viewport" content="width=device-width, initial-scale=1"> 
 </head>
 
@@ -15,14 +16,8 @@
 
     <button id="btn-reload" disabled>Reload All</button>
 
-    <div class="progress-container">
-        <p id="progress-absolute">0/0</p>
-        <div id="progress-bar">
-            <div id="progress-done"></div>
-            <div id="progress-todo"></div>
-        </div>
-        <p id="progress-relative">0.0%</p>
-    </div>
+    <mdn-progress-bar id="calendar-progress"></mdn-progress-bar>
+    
 
     <div id="map-dialog">
         <iframe></iframe>

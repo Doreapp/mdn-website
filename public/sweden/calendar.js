@@ -4,11 +4,7 @@
     }
 
     const setProgress = (done, total) => {
-        let todo = total - done
-        _qs("#progress-absolute").innerText = done + "/" + total
-        _qs("#progress-relative").innerText = (done * 100 / total).toFixed(1) + "%"
-        _qs("#progress-done").style.flex = done
-        _qs("#progress-todo").style.flex = todo
+        Mdn.progressBars[0].setProgress(done, total)
     }
 
     Mdn.apiCall("sweden", "getCalendar")

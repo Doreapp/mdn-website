@@ -40,27 +40,6 @@ div.day.done table {
     background-color: lightgray;
 }
 
-.progress-container {
-    width: 80%;
-    margin-left: 10%;
-    display: flex;
-}
-
-#progress-bar {
-    margin: 10px;
-    flex: 1;
-    height: 2em;
-    display: flex;
-}
-
-#progress-done {
-    background-color: green;
-}
-
-#progress-todo {
-    background-color: lightgray;
-}
-
 #btn-reload {
     right: 5px;
     top: 5px;

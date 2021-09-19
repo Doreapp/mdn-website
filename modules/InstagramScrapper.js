@@ -12,7 +12,7 @@ const cacheFolder = path.join(__dirname, ".cache"), // Main cache folder
 // Calendar URL
 const URL = "https://www.instagram.com/tonio_in_sweden/"
 
-class Utils { }
+class Utils {}
 
 /**
  * Parse a string containing unicode character 
@@ -76,7 +76,7 @@ class Media {
             executeGet(this.url)
                 .then(data => {
                     let file = path.join(folder, this.id + ".jpg")
-                    fs.writeFile(file, data, function (err) {
+                    fs.writeFile(file, data, function(err) {
                         if (err) {
                             reject(err)
                         } else {
@@ -208,7 +208,8 @@ class Post {
         }
 
         if ("edge_sidecar_to_children" in options && "edges" in options["edge_sidecar_to_children"]) {
-            let _found = false, _missing = false
+            let _found = false,
+                _missing = false
             options.edge_sidecar_to_children.edges.forEach(item => {
                 if ("node" in item) {
                     this.medias.push(Media.parse(item.node))
@@ -351,7 +352,7 @@ const executeGet = (url) => {
 const saveProfileHTML = (html) => {
     Logger.log("InstagramScrapper", "Saving html profile")
     return new Promise((resolve, reject) => {
-        fs.writeFile(rawHtmlProfile, html, function (err) {
+        fs.writeFile(rawHtmlProfile, html, function(err) {
             if (err) {
                 reject(err)
             } else {
@@ -363,7 +364,7 @@ const saveProfileHTML = (html) => {
 
 const readProfileHTML = () => {
     return new Promise((resolve, reject) => {
-        fs.readFile(rawHtmlProfile, "utf-8", function (err, data) {
+        fs.readFile(rawHtmlProfile, "utf-8", function(err, data) {
             if (err) {
                 reject(err)
             } else {
@@ -393,10 +394,10 @@ const parseInstagramProfile = html => {
     let end = html.indexOf(endStr, start)
 
     let value = html.substring(start + startStr.length, end - 1)
-    //console.log(value)
+        //console.log(value)
 
     let object = JSON.parse(value)
-    //console.log(object)
+        //console.log(object)
 
     let profile = undefined
     if ("entry_data" in object &&
@@ -415,7 +416,7 @@ const parseInstagramProfile = html => {
     return profile
 }
 
-const tryToUpdate = async () => {
+const tryToUpdate = async() => {
     try {
         let html = await fetchInstagram()
         if (html.length > 10) {

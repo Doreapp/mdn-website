@@ -1,0 +1,10 @@
+irob
+    13-09;Read chapter 8 and 9 of the textbook
+    13-09;Quiz about lecture 6
+    17-07;Lab 2 - Kinematics
+paradis
+    17-09;Lecture 5 - read slides
+    17-09;Lecture 5 - do exercises
+    17-09;Lecture 6 - read slides
+    17-09;Lecture 6 - do exercises
+    22-09;Lab 2 - build the team and do (finish) the lab

@@ -1,69 +1,41 @@
-
-
-table {
-    border: solid 1px black;
-    border-collapse: collapse;
-    width: 100%;
-}
-
-td {
-    padding: 2px;
-}
-
-tr.line-up > td {
-    border-top: solid 1px black;
-}
-
-tr.line-down > td {
-    border-bottom: solid 1px black;
-}
-
-tr.pair {
-    background-color: #ddddff;
-}
-
-tr.odd {
-    background-color: #ccccff;
-}
-
-td.day {
-    text-align: center;
-    font-weight: bold;
-    background-color: #eeeeee;
-}
-
-td.start-hour {
-    vertical-align: top;
-    padding-right: 4px;
-}
-
-td.end-hour {
-    vertical-align: bottom;
-    padding-right: 4px;
-}
-
-tr.done {
+div.day {
+    margin: 10px;
+    border-radius: 5px;
+    padding: 5px;
     background-color: grey;
 }
 
-.progress-container {
-    width: 80%;
-    margin-left: 10%;
-    display: flex;
+table {
+    border-collapse: collapse;
 }
 
-#progress-bar {
-    margin: 10px;
-    flex: 1;
-    height: 2em;
-    display: flex;
+td {
+    padding: 3px;
 }
 
-#progress-done {
-    background-color: green;
+tr {
+    border-top: 1px solid #666666;
 }
 
-#progress-todo {
+tr:first-child {
+    border-top: 0px;
+}
+
+div.day .header {
+    margin-bottom: 5px;
+    padding: 5px;
+    text-align: center;
+    font-weight: bold;
+    font-size: large;
+}
+
+div.day .courses-container {
+    border-radius: 5px;
+    background-color: white;
+    width: 100%;
+}
+
+div.day.done table {
     background-color: lightgray;
 }
 
@@ -81,7 +53,15 @@ tr.done {
     display: none;
 }
 
-#map-dialog > iframe {
+.empty-cell {
+    height: 30px;
+}
+
+.event-content {
+    height: 100%;
+}
+
+#map-dialog>iframe {
     width: 100%;
     height: 100%;
 }
@@ -93,7 +73,7 @@ tr.done {
 #menu {
     padding: 10px;
     display: flex;
-    border-bottom: solid 1px black ;
+    border-bottom: solid 1px black;
     margin-bottom: 10px;
 }
 
@@ -110,8 +90,24 @@ a[type=section] {
     text-decoration: none;
 }
 
+a:hover {
+    border-radius: 5px;
+    background-color: #eee;
+}
+
+td.hour {
+    vertical-align: bottom;
+    border-right: 1px solid #666666;
+}
+
+td.course {
+    border-left: 1px solid #666666;
+}
+
+td.empty-cell {
+    border-left: 1px solid #666666;
+}
+
 #calendar-section {
     border: solid red;
 }
-
-

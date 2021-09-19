@@ -1,0 +1,23 @@
+
+.mdn-progress-container {
+    width: 80%;
+    margin-left: 10%;
+    display: flex;
+}
+
+.mdn-progress-bar {
+    margin: 10px;
+    flex: 1;
+    height: 2em;
+    display: flex;
+    border-radius: 5px;
+    outline: solid 3px white;
+}
+
+.mdn-progress-done {
+    background-color: green;
+}
+
+.mdn-progress-todo {
+    background-color: lightgray;
+}

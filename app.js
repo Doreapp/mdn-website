@@ -61,7 +61,9 @@ const clearCache = async() => {
         console.error("Error creating cache dir", err)
     }
 }
-clearCache()
+//clearCache()
+
+
 
 
 // Launch server (IPV4 only)

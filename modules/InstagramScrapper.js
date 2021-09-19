@@ -3,6 +3,8 @@ const https = require('https'),
     path = require("path"),
     Logger = require("./Logger.js")
 
+// TODO fetch stories
+
 
 // Files
 const cacheFolder = path.join(__dirname, ".cache"), // Main cache folder
@@ -12,7 +14,7 @@ const cacheFolder = path.join(__dirname, ".cache"), // Main cache folder
 // Calendar URL
 const URL = "https://www.instagram.com/tonio_in_sweden/"
 
-class Utils {}
+class Utils { }
 
 /**
  * Parse a string containing unicode character 
@@ -73,20 +75,19 @@ class Media {
      */
     fetchAndSave(folder = imagesFolder) {
         return new Promise((resolve, reject) => {
-            executeGet(this.url)
-                .then(data => {
-                    let file = path.join(folder, this.id + ".jpg")
-                    fs.writeFile(file, data, function(err) {
-                        if (err) {
-                            reject(err)
-                        } else {
-                            resolve(file)
-                        }
+            let file = path.join(folder, this.id + ".jpg")
+            if (fs.existsSync(file)) {
+                resolve(file)
+            } else {
+                executeGet(this.url, { encoding: null }, true)
+                    .then(res => {
+                        res.pipe(fs.createWriteStream(file))
+                        resolve(file)
                     })
-                })
-                .catch(err => {
-                    reject(err)
-                })
+                    .catch(err => {
+                        reject(err)
+                    })
+            }
         })
     }
 }
@@ -140,6 +141,29 @@ class Video extends Media {
         }
 
         Logger.log("InstagramScrapper.Video", "<init> Video. Found " + found.length + " attributes: " + JSON.stringify(found) + ". Missing " + missing.length + " attributes: " + JSON.stringify(missing) + ".")
+    }
+
+    /**
+     * Fetch the media and save in into the specified folder
+     * @param {string} folder path-like string, specifying the folder to use. By default the image cache folder 
+     * @returns {Promise} Once resolved, contains the path of the saved video
+     */
+    fetchAndSave(folder = imagesFolder) {
+        return new Promise((resolve, reject) => {
+            let file = path.join(folder, this.id + ".mp4")
+            if (fs.existsSync(file)) {
+                resolve(file)
+            } else {
+                executeGet(this.videoUrl, { encoding: null }, true)
+                    .then(res => {
+                        res.pipe(fs.createWriteStream(file))
+                        resolve(file)
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            }
+        })
     }
 }
 
@@ -226,7 +250,8 @@ class Post {
             }
             found.push("edge_sidecar_to_children.edges")
         } else {
-            missing.push("edge_sidecar_to_children.edges")
+            // Only one media
+            this.medias.push(Media.parse(options))
         }
 
         Logger.log("InstagramScrapper.Post", "<init> Post.\n\tFound " + found.length + " attributes: " + JSON.stringify(found) + ".\n\tMissing " + missing.length + " attributes: " + JSON.stringify(missing) + ".")
@@ -315,30 +340,34 @@ class Profile {
  * @param {string} url URL to fetch 
  * @returns Promise, when fullfiled, provide the request response content (body)
  */
-const executeGet = (url) => {
+const executeGet = (url, options = {}, pipe = false) => {
     return new Promise((resolve, reject) => {
         const req = https.request(url, {
             port: 443,
-            method: 'GET'
+            method: 'GET',
+            ...options
         }, res => {
-            //console.log(res)
+            if (pipe) {
+                resolve(res)
+            } else {
 
-            // Read the content (body)
-            let result = ""
+                // Read the content (body)
+                let result = ""
 
-            res.on('data', data => {
-                // Fill the buffer
-                result += data.toString()
-            })
+                res.on('data', data => {
+                    // Fill the buffer
+                    result += data.toString()
+                })
 
-            res.on('end', () => {
-                // Resolve the promise
-                resolve(result)
-            })
+                res.on('end', () => {
+                    // Resolve the promise
+                    resolve(result)
+                })
 
-            res.on('error', err => {
-                reject(err)
-            });
+                res.on('error', err => {
+                    reject(err)
+                });
+            }
         })
 
         req.on('error', error => {
@@ -349,10 +378,15 @@ const executeGet = (url) => {
     })
 }
 
+/**
+ * Save the raw html instagram page 
+ * @param {string} html HTML string content of the page to save 
+ * @returns {Promise} 
+ */
 const saveProfileHTML = (html) => {
     Logger.log("InstagramScrapper", "Saving html profile")
     return new Promise((resolve, reject) => {
-        fs.writeFile(rawHtmlProfile, html, function(err) {
+        fs.writeFile(rawHtmlProfile, html, function (err) {
             if (err) {
                 reject(err)
             } else {
@@ -362,9 +396,13 @@ const saveProfileHTML = (html) => {
     })
 }
 
+/**
+ * Read the saved HTML page
+ * @returns {Promise}
+ */
 const readProfileHTML = () => {
     return new Promise((resolve, reject) => {
-        fs.readFile(rawHtmlProfile, "utf-8", function(err, data) {
+        fs.readFile(rawHtmlProfile, "utf-8", function (err, data) {
             if (err) {
                 reject(err)
             } else {
@@ -385,6 +423,11 @@ const fetchInstagram = (url = URL) => {
     return executeGet(url)
 }
 
+/**
+ * Parse HTML webpage of the instagram profile 
+ * @param {string} html html webpage 
+ * @returns {Profile} profile object
+ */
 const parseInstagramProfile = html => {
     Logger.log("InstagramScrapper", "Parsing instagram profile")
 
@@ -394,10 +437,10 @@ const parseInstagramProfile = html => {
     let end = html.indexOf(endStr, start)
 
     let value = html.substring(start + startStr.length, end - 1)
-        //console.log(value)
+    //console.log(value)
 
     let object = JSON.parse(value)
-        //console.log(object)
+    //console.log(object)
 
     let profile = undefined
     if ("entry_data" in object &&
@@ -416,7 +459,10 @@ const parseInstagramProfile = html => {
     return profile
 }
 
-const tryToUpdate = async() => {
+/**
+ * Try to update the saved version of the webpage
+ */
+const tryToUpdate = async () => {
     try {
         let html = await fetchInstagram()
         if (html.length > 10) {
@@ -431,6 +477,20 @@ const tryToUpdate = async() => {
     }
 }
 
+/**
+ * Save all the medias in cache, if not already saved
+ * @param {Array<Media>} medias list of medias to save 
+ */
+const saveInexistantMedias = medias => {
+    medias.forEach(media => {
+        media.fetchAndSave()
+    })
+}
+
+/**
+ * Get instagram profile, from cache if availalbe, otherwise from remote 
+ * @returns {Profile} 
+ */
 const getInstagramProfile = () => {
     return new Promise((resolve, reject) => {
         readProfileHTML()
@@ -440,6 +500,18 @@ const getInstagramProfile = () => {
                 let profile = parseInstagramProfile(html)
                 if (profile) {
                     resolve(profile)
+
+                    if (profile.posts) {
+                        let medias = []
+                        profile.posts.forEach(post => {
+                            if (post.medias) {
+                                post.medias.forEach(media => {
+                                    medias.push(media)
+                                })
+                            }
+                        })
+                        saveInexistantMedias(medias)
+                    }
                 } else {
                     reject("Impossible to parse instagram profile")
                 }
@@ -469,12 +541,89 @@ const getInstagramProfile = () => {
     })
 }
 
+/**
+ * Get a cached instagram image if avaiable
+ * @param {number} id Identifier of the image  
+ * @returns {File} Image file
+ */
+const getInstagramImage = id => {
+    return new Promise((resolve, reject) => {
+        let file = path.join(imagesFolder, id + ".jpg")
+        if (!fs.existsSync(file)) {
+            resolve(undefined)
+        } else {
+            fs.readFile(file, (err, data) => {
+                if (err) {
+                    reject(err)
+                } else {
+                    resolve(data)
+                }
+            })
+        }
+    })
+}
+
+/**
+ * Get a cached instagram video, if available
+ * @param {number} id Identifier of the video 
+ * @returns {object} dict that contains 'data' (video file) and 'size' (the file size)
+ */
+const getInstagramVideo = id => {
+    return new Promise((resolve, reject) => {
+        let file = path.join(imagesFolder, id + ".mp4")
+        if (!fs.existsSync(file)) {
+            resolve(undefined)
+        } else {
+            fs.stat(file, (err, data) => {
+                if (err) {
+                    reject(err)
+                } else {
+                    const fileSize = data.size
+
+                    fs.readFile(file, (err, data) => {
+                        if (err) {
+                            reject(err)
+                        } else {
+                            resolve({ data: data, size: fileSize })
+                        }
+                    })
+                }
+            })
+        }
+    })
+}
+
 module.exports = {
     getInstagramProfile: getInstagramProfile,
+    getInstagramImage: getInstagramImage,
+    getInstagramVideo: getInstagramVideo,
 }
 
 // Create the image folder 
-//TODO useless ?
 if (!fs.existsSync(imagesFolder)) {
     fs.mkdirSync(imagesFolder)
 }
+
+let Tests = {}
+Tests.video = {}
+Tests.video.download = () => {
+    console.log("Test video download")
+
+    //let url = "https://scontent.cdninstagram.com/v/t50.2886-16/240937232_389174232822248_7166148847800746054_n.mp4?_nc_ht=scontent-arn2-2.cdninstagram.com&_nc_cat=108&_nc_ohc=itSpHxgXnh4AX8TtQ54&edm=ABfd0MgBAAAA&ccb=7-4&oe=61498EF8&oh=41dcf0037b2417c830c4cbc180f791fc&_nc_sid=7bff83"
+    let url = "https://scontent-arn2-2.cdninstagram.com/v/t50.2886-16/240937232_389174232822248_7166148847800746054_n.mp4?_nc_ht=scontent-arn2-2.cdninstagram.com&_nc_cat=108&_nc_ohc=itSpHxgXnh4AX8TtQ54&edm=ABfd0MgBAAAA&ccb=7-4&oe=61498EF8&oh=41dcf0037b2417c830c4cbc180f791fc&_nc_sid=7bff83"
+    let file = path.join(imagesFolder, "12345678.mp4")
+
+    executeGet(url, { encoding: null }, true)
+        .then(res => {
+            res.pipe(fs.createWriteStream(file))
+            console.log("Video downloaded succesfully")
+        })
+        .catch(err => {
+            console.log("Video downloaded failed")
+        })
+}
+Tests.runAll = () => {
+    Tests.video.download()
+}
+//Tests.runAll()
+

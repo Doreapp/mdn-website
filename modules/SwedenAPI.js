@@ -87,11 +87,56 @@ const getInstagramProfile = (options, response) => {
     return 200
 }
 
+const getInstagramImage = (options, response) => {
+    if (!("id" in options)) {
+        response.status(400).send("Image id not specified")
+    } else {
+        InstagramScrapper.getInstagramImage(options.id)
+            .then(img => {
+                if (img) {
+                    response.set('Content-Type', 'image/jpeg')
+                    response.status(200).send(img)
+                } else {
+                    response.status(400).send("Image id not found")
+                }
+            })
+            .catch(err => {
+                response.status(500).send(err)
+            })
+    }
+    return 200
+}
+
+
+const getInstagramVideo = (options, response) => {
+    if (!("id" in options)) {
+        response.status(400).send("Video id not specified")
+    } else {
+        InstagramScrapper.getInstagramVideo(options.id)
+            .then(video => {
+                if (video) {
+                    console.log("request for video")
+                    response.set('Content-Length', video.size)
+                    response.set('content-type', 'video/mp4')
+                    response.status(200).send(video.data)
+                } else {
+                    response.status(400).send("Video id not found")
+                }
+            })
+            .catch(err => {
+                response.status(500).send(err)
+            })
+    }
+    return 200
+}
+
 const commands = {
     'getCalendar': getCalendar,
     'updateCalendar': updateCalendar,
     'getDurationStatistics': getDurationStatistics,
     'getInstagramProfile': getInstagramProfile,
+    'getInstagramImage': getInstagramImage,
+    'getInstagramVideo': getInstagramVideo,
 }
 
 const handleRequest = (query, response) => {

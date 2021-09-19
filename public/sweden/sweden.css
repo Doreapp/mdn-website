@@ -111,3 +111,48 @@ td.empty-cell {
 #calendar-section {
     border: solid red;
 }
+
+.page-header {
+    margin: 2em;
+}
+
+#instagram-stats {
+    display: flex;
+    justify-content: space-around;
+}
+
+.instagram-post {
+    margin-left: auto;
+    margin-right: auto;
+    
+    margin-top: 2em;
+    margin-bottom: 2em;
+
+    width: 80%;
+}
+
+.instagram-post .date {
+    font-weight: 600;
+}
+
+.instagram-post .description {
+    font-size: 0.8em;
+}
+
+.instagram-image {   
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  max-height: 100vh;
+}
+
+.instagram-video {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    max-height: 100vh;
+}

@@ -1,7 +1,8 @@
 // API for the sweden
 const CalendarFetch = require("./CalendarFetch"),
     Constants = require("../constants"),
-    Logger = require("./Logger")
+    Logger = require("./Logger"),
+    InstagramScrapper = require("./InstagramScrapper")
 
 /**
  * Get the calendar and return it
@@ -68,10 +69,29 @@ const getDurationStatistics = (options, response) => {
     return 200
 }
 
+/**
+ * Get the Instagram profile of tonio_in_sweden and return information on it
+ * @param {Object} options request options. unused. 
+ * @param {Response} response response to the client 
+ * @returns status code of the response
+ */
+const getInstagramProfile = (options, response) => {
+    InstagramScrapper.getInstagramProfile()
+        .then(profile => {
+            response.status(200).send(JSON.stringify(profile))
+        })
+        .catch(error => {
+            console.error("Error getting instagram profile:", error)
+            response.status(500).send("Error instagram profile: " + error)
+        })
+    return 200
+}
+
 const commands = {
     'getCalendar': getCalendar,
     'updateCalendar': updateCalendar,
     'getDurationStatistics': getDurationStatistics,
+    'getInstagramProfile': getInstagramProfile,
 }
 
 const handleRequest = (query, response) => {

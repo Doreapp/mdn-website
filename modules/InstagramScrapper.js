@@ -14,6 +14,11 @@ const URL = "https://www.instagram.com/tonio_in_sweden/"
 
 class Utils { }
 
+/**
+ * Parse a string containing unicode character 
+ * @param {string} url 
+ * @returns parsed string
+ */
 Utils.parseFromUnicode = url => {
     return JSON.parse('"' + url + '"')
 }
@@ -58,7 +63,7 @@ class Media {
             missing.push("url")
         }
 
-        console.log("<init> Media. Found " + found.length + " attributes: " + JSON.stringify(found) + ". Missing " + missing.length + " attributes: " + JSON.stringify(missing) + ".")
+        Logger.log("InstagramScrapper.Media", "<init> Media. Found " + found.length + " attributes: " + JSON.stringify(found) + ". Missing " + missing.length + " attributes: " + JSON.stringify(missing) + ".")
     }
 
     /**
@@ -67,13 +72,12 @@ class Media {
      * @returns {Promise} Once resolved, contains the path of the saved image    
      */
     fetchAndSave(folder = imagesFolder) {
-        console.log("Request to fetch and save")
         return new Promise((resolve, reject) => {
             executeGet(this.url)
                 .then(data => {
-                    let file = path.join(folder, this.id+".jpg")
-                    fs.writeFile(file, data, function(err) {
-                        if(err) {
+                    let file = path.join(folder, this.id + ".jpg")
+                    fs.writeFile(file, data, function (err) {
+                        if (err) {
                             reject(err)
                         } else {
                             resolve(file)
@@ -100,6 +104,7 @@ Media.parse = options => {
             return new Image(options)
         }
     } else {
+        Logger.log("InstagramScrapper.Media", "is_video attribute not found in media options")
         console.warn("is_video attribute not found in media options")
         return undefined
     }
@@ -134,7 +139,7 @@ class Video extends Media {
             missing.push("video_url")
         }
 
-        console.log("<init> Video. Found " + found.length + " attributes: " + JSON.stringify(found) + ". Missing " + missing.length + " attributes: " + JSON.stringify(missing) + ".")
+        Logger.log("InstagramScrapper.Video", "<init> Video. Found " + found.length + " attributes: " + JSON.stringify(found) + ". Missing " + missing.length + " attributes: " + JSON.stringify(missing) + ".")
     }
 }
 
@@ -223,7 +228,7 @@ class Post {
             missing.push("edge_sidecar_to_children.edges")
         }
 
-        console.log("<init> Post.\n\tFound " + found.length + " attributes: " + JSON.stringify(found) + ".\n\tMissing " + missing.length + " attributes: " + JSON.stringify(missing) + ".")
+        Logger.log("InstagramScrapper.Post", "<init> Post.\n\tFound " + found.length + " attributes: " + JSON.stringify(found) + ".\n\tMissing " + missing.length + " attributes: " + JSON.stringify(missing) + ".")
     }
 }
 
@@ -299,7 +304,7 @@ class Profile {
             missing.push("edge_owner_to_timeline_media.edges")
         }
 
-        console.log("<init> Profile.\n\tFound " + found.length + " attributes: " + JSON.stringify(found) + ".\n\tMissing " + missing.length + " attributes: " + JSON.stringify(missing) + ".")
+        Logger.log("InstagramScrapper.Profile", "<init> Profile.\n\tFound " + found.length + " attributes: " + JSON.stringify(found) + ".\n\tMissing " + missing.length + " attributes: " + JSON.stringify(missing) + ".")
     }
 }
 
@@ -310,7 +315,6 @@ class Profile {
  * @returns Promise, when fullfiled, provide the request response content (body)
  */
 const executeGet = (url) => {
-    console.log("GET " + url)
     return new Promise((resolve, reject) => {
         const req = https.request(url, {
             port: 443,
@@ -345,6 +349,7 @@ const executeGet = (url) => {
 }
 
 const saveProfileHTML = (html) => {
+    Logger.log("InstagramScrapper", "Saving html profile")
     return new Promise((resolve, reject) => {
         fs.writeFile(rawHtmlProfile, html, function (err) {
             if (err) {
@@ -362,11 +367,7 @@ const readProfileHTML = () => {
             if (err) {
                 reject(err)
             } else {
-                try {
-                    resolve(data)
-                } catch (err) {
-                    reject(err)
-                }
+                resolve(data)
             }
         })
     })
@@ -383,43 +384,8 @@ const fetchInstagram = (url = URL) => {
     return executeGet(url)
 }
 
-const fetchInstagramPost = url => {
-    console.log("Fetch Instagram post")
-    Logger.log("InstagramScrapper", "Fetching instagram post at url " + url)
-    return executeGet(url)
-}
-
-const saveInstagramPost = (name, html) => {
-    console.log("Saving instagram post with name '" + name + "'")
-    let file = path.join(imagesFolder, name + ".html")
-    return new Promise((resolve, reject) => {
-        fs.writeFile(file, html, function (err) {
-            if (err) {
-                reject(err)
-            } else {
-                resolve()
-            }
-        })
-    })
-}
-
 const parseInstagramProfile = html => {
-    console.log("parse html")
     Logger.log("InstagramScrapper", "Parsing instagram profile")
-
-    let result = {}
-
-    // Get <meta content="73 Followers, 64 Following, 9 Posts - See Instagram photos and videos from @tonio_in_sweden" name="description" />
-    let regex = /<meta content="(.*)" name="description" *\/>/
-    let matches = html.match(regex)
-    let description = undefined
-
-    if (matches) {
-        description = matches[1]
-        console.log("meta *description* parsed: '" + description + "'")
-    } else {
-        console.log("Impossible to find meta *description*")
-    }
 
     let startStr = '<script type="text/javascript">window._sharedData = '
     let endStr = '</script>'
@@ -449,66 +415,65 @@ const parseInstagramProfile = html => {
     return profile
 }
 
+const tryToUpdate = async () => {
+    try {
+        let html = await fetchInstagram()
+        if (html.length > 10) {
+            let profile = parseInstagramProfile(html)
+            if (profile) {
+                Logger.log("InstagramScrapper", "Saved updated Instagram profile html")
+                saveProfileHTML(html) // Save the html in cache
+            }
+        }
+    } catch (err) {
+        Logger.log("InstagramScrapper", "Impossible to fetch remote instagram profile")
+    }
+}
 
-const test = () => {
-    console.log("Instagram scrapper test start.")
+const getInstagramProfile = () => {
+    return new Promise((resolve, reject) => {
+        readProfileHTML()
+            .then(html => {
+                tryToUpdate()
 
-    fetchInstagram("https://www.instagram.com/olivierclaye/")
-        .then(result => {
-            console.log("Result from fetch: ", result)
-            fs.writeFileSync(path.join(__dirname, "insta.html"), result)
+                let profile = parseInstagramProfile(html)
+                if (profile) {
+                    resolve(profile)
+                } else {
+                    reject("Impossible to parse instagram profile")
+                }
+            })
+            .catch(err => {
+                console.log("Impossible to read cached instagram profile, fetch it from remote")
+                Logger.log("InstagramScrapper", "Impossible to read cached instagram profile. Fetch from remote. Error:", err)
+                fetchInstagram()
+                    .then(html => {
+                        if (html.length > 10) {
+                            let profile = parseInstagramProfile(html)
+                            if (profile) {
+                                saveProfileHTML(html) // Save the html in cache
 
-            parseInstagramProfile(result)
-        })
-        .catch(err => {
-            console.error("Error fetching instagram", err)
-        })
-
+                                resolve(profile)
+                            } else {
+                                reject("Impossible to parse instagram profile")
+                            }
+                        } else {
+                            reject("Instagram refused access to remote instagram profile")
+                        }
+                    })
+                    .catch(err => {
+                        reject(err)
+                    })
+            })
+    })
 }
 
 module.exports = {
-    test: test,
+    getInstagramProfile: getInstagramProfile,
 }
 
-const test2 = () => {
-    fetchInstagram()
-        .then(html => {
-            // console.log(html)
-            saveProfileHTML(html)
-            parseInstagramProfile(html)
-        })
-}
-
-const test3 = () => {
-    readProfileHTML()
-        .then(html => {
-            let profile = parseInstagramProfile(html)
-        })
-}
-
+// Create the image folder 
+//TODO useless ?
 if (!fs.existsSync(imagesFolder)) {
     fs.mkdirSync(imagesFolder)
 }
-
-test3()
-
-/*
-https://www.instagram.com/data/shared_data/
-  JSON
-    profile_pic_url
-    profile_pic_url_hd
-
-profile page
-  HTML
-    <meta content="73 Followers, 64 Following, 9 Posts - See Instagram photos and videos from @tonio_in_sweden" name="description" />
-    "shortcode":"..."
-      --> /p/...
-
-          HTML
-            <title>@tonio_in_sweden posted on Instagram • Aug 29, 2021 at 4:01pm UTC</title>
-
-            <meta property="og:description" content="23 Likes, 0 Comments - @tonio_in_sweden on Instagram: “Musée en plein air / zoo 🏞️
-              Essayez de trouver le loup dans la dernière photo 🧐🐺”" />
-
-          I NEED TO GET THE VIDEO TOO
-    */

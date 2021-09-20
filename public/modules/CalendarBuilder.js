@@ -8,7 +8,7 @@
 
 (() => {
     // Export
-    class CalendarBuilder { }
+    class CalendarBuilder {}
 
     // Are we debugging the CalendarBuilder module.
     // If so, will print logs
@@ -311,15 +311,16 @@
          * @returns {object(row, rowSpan)} object containing the row index as `row`, and the row span as `rowSpan`
          */
         _findRowAndSpan(hours, start, end) {
-            let row = 0, span = 1
+            let row = 0,
+                span = 1
             while (row < hours.length && hours[row] < start)
                 row++
-            while (row + span < hours.length && hours[row + span] < end)
-                span++
-            return {
-                row: row,
-                rowSpan: span
-            }
+                while (row + span < hours.length && hours[row + span] < end)
+                    span++
+                    return {
+                        row: row,
+                        rowSpan: span
+                    }
         }
 
         /**
@@ -345,7 +346,7 @@
             while (span + index < columns.length && colOk(columns[span + index]))
                 span++
 
-            return span
+                return span
         }
 
         /**
@@ -407,7 +408,7 @@
             let nextDay = new Date(this.day)
             nextDay.setDate(nextDay.getDate() + 1);
 
-            if(nextDay.getTime() < (new Date()).getTime()){
+            if (nextDay.getTime() < (new Date()).getTime()) {
                 mainContainer.classList.add("done")
             }
 
@@ -510,13 +511,13 @@
     }
 
 
-     /**
+    /**
      * Set the calendar events to display on the webpage
      * @param {Array<Object>} events event list  
      */
     CalendarBuilder.setEvents = events => {
         console.log("setEvents3")
-        // Create main div
+            // Create main div
         let main = _ce("div", { class: "calendar" })
 
         let body = document.querySelector("body")
@@ -582,7 +583,6 @@
             total: eventsCount
         }
     }
-
 
     window["CalendarBuilder"] = CalendarBuilder
 })()

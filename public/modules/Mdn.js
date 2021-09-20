@@ -11,7 +11,7 @@
  ********************************/
 
 (() => {
-    class Mdn { }
+    class Mdn {}
 
     // Are we debugging
     Mdn.debug = true
@@ -131,7 +131,7 @@
         log("API call to " + domain + " for " + request, args)
         return new Promise((resolve, reject) => {
             let url = '/' + domain + "/api/" + "?command=" + request
-            //TODO handle args
+                //TODO handle args
             var xmlHttp = new XMLHttpRequest();
             xmlHttp.open("GET", url, false); // false for synchronous request
             xmlHttp.send(null);

@@ -1,5 +1,4 @@
 const port = process.env.PORT || 3000,
-    http = require('http'),
     fs = require('fs'),
     path = require("path"),
     express = require("express"),
@@ -62,7 +61,9 @@ const clearCache = async() => {
         console.error("Error creating cache dir", err)
     }
 }
-clearCache()
+//clearCache()
+
+
 
 
 // Launch server (IPV4 only)

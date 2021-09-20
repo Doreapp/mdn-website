@@ -6,3 +6,4 @@ cron.yaml
 package-lock.json
 *.zip
 *.log
+saveguard

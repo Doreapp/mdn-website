@@ -141,7 +141,7 @@ td.empty-cell {
 
 .instagram-image {   
   display: block;
-  width: 100%;
+  max-width: 100%;
   height: auto;
   margin-top: 0.5em;
   margin-bottom: 0.5em;
@@ -150,7 +150,7 @@ td.empty-cell {
 
 .instagram-video {
     display: block;
-    width: 100%;
+    max-width: 100%;
     height: auto;
     margin-top: 0.5em;
     margin-bottom: 0.5em;

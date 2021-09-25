@@ -628,13 +628,65 @@ Tests.http.fetchInstagramProfile = () => {
     fetchInstagram("https://www.instagram.com/")
         .then(html => {
             console.log("Success")
-            let fileName = path.join(cacheFolder, Date.now()+"-testHtmlFile.html")
+            let fileName = path.join(cacheFolder, Date.now() + "-testHtmlFile.html")
             fs.writeFileSync(fileName, html)
-            console.log("Instagram profile html file saved at "+fileName)
+            console.log("Instagram profile html file saved at " + fileName)
         })
         .catch(err => {
             console.log("Error", err)
         })
+}
+Tests.parse = {}
+Tests.parse.profile = () => {
+    console.log("** Testing to parse raw html instagram profile **")
+    console.log("/!\\ Warning: need to have the html profile saved into " + rawHtmlProfile + " /!\\");
+    readProfileHTML()
+        .then(rawProfile => {
+            let profile = parseInstagramProfile(rawProfile)
+            if (profile) {
+                console.log("Succesfully parsed instagram profile")
+                let fileName = path.join(cacheFolder, "parsed_instagram_profile.json")
+                fs.writeFileSync(fileName, JSON.stringify(profile))
+                console.log("Parsed profile saved into " + fileName)
+            } else {
+                console.log("ERROR: unable to parse instagram profile")
+            }
+        })
+        .catch(error => {
+            console.log("ERROR reading raw html profile file ", error)
+        })
+}
+Tests.parse.saveMedias = () => {
+    console.log("** Testing to inexistant medias in parse profile **")
+    let jsonFile = path.join(cacheFolder, "parsed_instagram_profile.json")
+    console.log("/!\\ Warning: need to have the html profile saved into " + rawHtmlProfile + " /!\\");
+    console.log("/!\\ Warning: Need to parse succesfully the profile /!\\");
+
+    readProfileHTML()
+        .then(rawProfile => {
+            let profile = parseInstagramProfile(rawProfile)
+            if (profile) {
+                console.log("Succesfully parsed instagram profile")
+
+                let medias = []
+                profile.posts.forEach(post => {
+                    if (post.medias) {
+                        post.medias.forEach(media => {
+                            medias.push(media)
+                        })
+                    }
+                })
+                saveInexistantMedias(medias)
+
+                console.log("Test succesful. Medias saved")
+            } else {
+                console.log("ERROR: unable to parse instagram profile")
+            }
+        })
+        .catch(error => {
+            console.log("ERROR reading raw html profile file ", error)
+        })
+
 }
 
 if (require.main == module) {
@@ -650,11 +702,11 @@ if (require.main == module) {
     function runTest(name) {
         let keys = name.split(".")
         let object = Tests
-        for(let i = 0; i < keys.length; i ++){
-            if(keys[i] in object) {
+        for (let i = 0; i < keys.length; i++) {
+            if (keys[i] in object) {
                 object = object[keys[i]]
             } else {
-                console.log("ERROR: Unable to find test "+keys[i])
+                console.log("ERROR: Unable to find test " + keys[i])
                 printHelp()
                 return
             }
@@ -669,7 +721,7 @@ if (require.main == module) {
                 hasChildren = true
                 runForNode(node[key])
             })
-            if(!hasChildren) {
+            if (!hasChildren) {
                 node()
             }
         }
@@ -677,9 +729,9 @@ if (require.main == module) {
     }
 
     function listTests() {
-        function listForNode(node, indent='    ') {
+        function listForNode(node, indent = '    ') {
             Object.keys(node).forEach(key => {
-                console.log(indent+key)
+                console.log(indent + key)
                 listForNode(node[key], indent + '    ')
             })
         }

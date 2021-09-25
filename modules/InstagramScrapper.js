@@ -622,8 +622,93 @@ Tests.video.download = () => {
             console.log("Video downloaded failed")
         })
 }
-Tests.runAll = () => {
-    Tests.video.download()
+Tests.http = {}
+Tests.http.fetchInstagramProfile = () => {
+    console.log("TEST fetch instagram profile")
+    fetchInstagram("https://www.instagram.com/")
+        .then(html => {
+            console.log("Success")
+            let fileName = path.join(cacheFolder, Date.now()+"-testHtmlFile.html")
+            fs.writeFileSync(fileName, html)
+            console.log("Instagram profile html file saved at "+fileName)
+        })
+        .catch(err => {
+            console.log("Error", err)
+        })
 }
-//Tests.runAll()
 
+if (require.main == module) {
+    // Runned directly as main 
+    function printHelp() {
+        console.log("Usage: ")
+        console.log("   [-t <test> | -a | -l]")
+        console.log("       -t <test> to run a specified <test>")
+        console.log("       -a to run all tests")
+        console.log("       -l to list the tests")
+    }
+
+    function runTest(name) {
+        let keys = name.split(".")
+        let object = Tests
+        for(let i = 0; i < keys.length; i ++){
+            if(keys[i] in object) {
+                object = object[keys[i]]
+            } else {
+                console.log("ERROR: Unable to find test "+keys[i])
+                printHelp()
+                return
+            }
+        }
+        object()
+    }
+
+    function runAllTests() {
+        function runForNode(node) {
+            let hasChildren = false
+            Object.keys(node).forEach(key => {
+                hasChildren = true
+                runForNode(node[key])
+            })
+            if(!hasChildren) {
+                node()
+            }
+        }
+        runForNode(Tests)
+    }
+
+    function listTests() {
+        function listForNode(node, indent='    ') {
+            Object.keys(node).forEach(key => {
+                console.log(indent+key)
+                listForNode(node[key], indent + '    ')
+            })
+        }
+        listForNode(Tests)
+    }
+
+    if (process.argv.length <= 2) {
+        // No args
+        printHelp()
+        return
+    }
+    switch (process.argv[2]) {
+        case '-t':
+            if (process.argv.length <= 3) {
+                console.log("ERROR: You must specify a test")
+                printHelp()
+                return
+            } else {
+                runTest(process.argv[3])
+            }
+            break
+        case '-a':
+            runAllTests()
+            break
+        case '-l':
+            listTests()
+            break
+        default:
+            console.log("ERROR: Unknown command '" + process.argv[2] + "'")
+            printHelp()
+    }
+}

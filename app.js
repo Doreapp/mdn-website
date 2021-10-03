@@ -3,10 +3,14 @@ const port = process.env.PORT || 3000,
     path = require("path"),
     express = require("express"),
     Logger = require("./modules/Logger.js"),
-    SwedenAPI = require("./modules/SwedenAPI")
+    SwedenAPI = require("./modules/SwedenAPI"),
+    PackagesLoader = require("./PackagesLoader")
 
 const app = express()
 app.use(express.static("public"))
+
+// Load external packages
+PackagesLoader.load(app);
 
 // Routes
 app.get("/", (req, res) => {
@@ -49,19 +53,19 @@ app.get("/sweden/api", (req, res) => {
 
 // Clear cache
 const clearCache = async() => {
-    Logger.log("Server", "Clearing cache")
-    try {
-        await fs.rmSync(path.join(__dirname, "/modules/.cache"), { recursive: true })
-    } catch (err) {
-        console.error("Error while clearing cache ", err)
+        Logger.log("Server", "Clearing cache")
+        try {
+            await fs.rmSync(path.join(__dirname, "/modules/.cache"), { recursive: true })
+        } catch (err) {
+            console.error("Error while clearing cache ", err)
+        }
+        try {
+            await fs.mkdirSync(path.join(__dirname, "/modules/.cache"))
+        } catch (err) {
+            console.error("Error creating cache dir", err)
+        }
     }
-    try {
-        await fs.mkdirSync(path.join(__dirname, "/modules/.cache"))
-    } catch (err) {
-        console.error("Error creating cache dir", err)
-    }
-}
-//clearCache()
+    //clearCache()
 
 
 

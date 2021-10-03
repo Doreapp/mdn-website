@@ -7,3 +7,4 @@ package-lock.json
 *.zip
 *.log
 saveguard
+packages/*.js
